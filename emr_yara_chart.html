@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ShifaCare EMR — Patient Chart</title>
+<style>
+  :root{
+    --bg:#eef1f5;
+    --panel:#ffffff;
+    --ink:#1b2733;
+    --muted:#66788a;
+    --line:#dfe5ec;
+    --brand:#0a6b74;      /* teal — common in MENA health branding */
+    --brand-2:#0e8a94;
+    --accent:#c4972e;      /* gold accent */
+    --danger:#c0392b;
+    --warn:#c77b0a;
+    --ok:#1f8a4c;
+    --chip:#eef4f5;
+    --shadow:0 1px 2px rgba(16,32,48,.06),0 6px 18px rgba(16,32,48,.06);
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans Arabic",sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .ar{font-family:"Noto Sans Arabic","Segoe UI",Tahoma,sans-serif;direction:rtl;unicode-bidi:isolate}
+  a{color:inherit;text-decoration:none}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    height:56px;background:linear-gradient(180deg,var(--brand-2),var(--brand));
+    color:#fff;display:flex;align-items:center;gap:18px;padding:0 18px;position:sticky;top:0;z-index:20;
+  }
+  .brand{display:flex;align-items:center;gap:11px;min-width:270px}
+  .logo{width:34px;height:34px;border-radius:9px;background:#fff;color:var(--brand);
+    display:grid;place-items:center;font-weight:800;font-size:18px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+  .brand b{font-size:16px;letter-spacing:.2px;display:block;line-height:1.05}
+  .brand small{opacity:.85;font-size:11px}
+  .gsearch{flex:0 0 320px;position:relative}
+  .gsearch input{width:100%;height:34px;border:none;border-radius:8px;padding:0 12px 0 34px;
+    background:rgba(255,255,255,.16);color:#fff;font-size:13px}
+  .gsearch input::placeholder{color:rgba(255,255,255,.75)}
+  .gsearch svg{position:absolute;left:10px;top:9px;opacity:.85}
+  .topspace{flex:1}
+  .tclock{font-variant-numeric:tabular-nums;text-align:right;line-height:1.15}
+  .tclock b{font-size:14px}.tclock small{opacity:.85;font-size:11px}
+  .topicons{display:flex;gap:14px;align-items:center;opacity:.95}
+  .badge-dot{position:relative}
+  .badge-dot::after{content:"3";position:absolute;top:-6px;right:-8px;background:var(--accent);
+    color:#3a2c00;font-size:10px;font-weight:700;border-radius:9px;padding:0 4px;line-height:14px}
+  .me{display:flex;align-items:center;gap:9px;padding-left:14px;border-left:1px solid rgba(255,255,255,.25)}
+  .me .av{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#3a2c00;
+    display:grid;place-items:center;font-weight:800}
+  .me b{font-size:13px;display:block;line-height:1.05}.me small{opacity:.85;font-size:11px}
+
+  /* ---------- layout ---------- */
+  .shell{display:grid;grid-template-columns:210px 1fr;min-height:calc(100vh - 56px)}
+  .side{background:var(--panel);border-right:1px solid var(--line);padding:12px 10px}
+  .side .sec{font-size:10.5px;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;
+    margin:14px 8px 6px}
+  .nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:#324256;
+    font-size:13px;margin-bottom:1px;cursor:pointer}
+  .nav a .ico{width:18px;text-align:center;opacity:.75}
+  .nav a:hover{background:#f1f5f7}
+  .nav a.on{background:var(--chip);color:var(--brand);font-weight:600}
+  .nav a .cnt{margin-left:auto;background:#eef1f5;color:#5b6b7c;border-radius:20px;font-size:11px;
+    padding:1px 7px;font-weight:600}
+  .side .cardq{margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:10px}
+  .side .cardq h5{margin:0 0 6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .qrow{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:#3c4c5e}
+  .qrow b{font-variant-numeric:tabular-nums}
+
+  main{padding:16px 20px 40px;min-width:0}
+
+  /* ---------- patient banner ---------- */
+  .pbanner{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);
+    padding:14px 16px;display:flex;gap:16px;align-items:center;position:relative;overflow:hidden}
+  .pbanner::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--brand)}
+  .pav{width:60px;height:60px;border-radius:12px;background:#e7eef0;color:var(--brand);
+    display:grid;place-items:center;font-weight:800;font-size:24px;flex:none}
+  .pmain{min-width:0}
+  .pname{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .pname h1{margin:0;font-size:20px;letter-spacing:.2px}
+  .pname .arname{font-size:16px;color:#40515f}
+  .pname .sex{font-size:11px;background:#e8f0f1;color:var(--brand);border-radius:20px;padding:2px 9px;font-weight:700}
+  .pmeta{display:flex;gap:18px;flex-wrap:wrap;margin-top:5px;color:var(--muted);font-size:12.5px}
+  .pmeta b{color:#2b3a48;font-weight:600;font-variant-numeric:tabular-nums}
+  .pflags{margin-left:auto;display:flex;gap:8px;align-items:center;flex:none}
+  .flag{font-size:11.5px;font-weight:700;border-radius:8px;padding:6px 10px;display:flex;gap:6px;align-items:center}
+  .flag.allergy{background:#fdecea;color:var(--danger);border:1px solid #f3c6c1}
+  .flag.blood{background:#eef4f5;color:var(--brand);border:1px solid #cfe2e3}
+  .flag.ins{background:#fff5e2;color:#9a6b00;border:1px solid #f0dca6}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:2px;margin:16px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .tab{padding:9px 15px;font-size:13px;color:#5c6c7d;cursor:pointer;border-bottom:2px solid transparent;font-weight:600}
+  .tab:hover{color:var(--brand)}
+  .tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+
+  .grid{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-top:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  .card h3{margin:0;padding:11px 14px;border-bottom:1px solid var(--line);font-size:13px;
+    display:flex;align-items:center;gap:8px}
+  .card h3 .r{margin-left:auto;font-size:11px;color:var(--muted);font-weight:500}
+  .card .body{padding:12px 14px}
+  .full{grid-column:1 / -1}
+
+  /* vitals */
+  .vitals{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .vit{border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#fbfcfd}
+  .vit .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .vit .v{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+  .vit .v small{font-size:11px;color:var(--muted);font-weight:600}
+  .vit.flag-w .v{color:var(--warn)}
+  .vit.flag-h .v{color:var(--danger)}
+
+  /* generic table */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+  tbody tr:hover{background:#f7fafb}
+  td.num{font-variant-numeric:tabular-nums}
+  .pill{font-size:10.5px;font-weight:700;border-radius:20px;padding:2px 9px;display:inline-block}
+  .pill.hi{background:#fdecea;color:var(--danger)}
+  .pill.lo{background:#e9f3ff;color:#1f6fb8}
+  .pill.ok{background:#e7f6ed;color:var(--ok)}
+  .pill.active{background:#e7f6ed;color:var(--ok)}
+  .pill.due{background:#fff5e2;color:#9a6b00}
+
+  .note{font-size:13px;color:#324256}
+  .note h4{margin:12px 0 4px;font-size:12px;color:var(--brand);text-transform:uppercase;letter-spacing:.05em}
+  .note p{margin:0 0 8px}
+  .note .sig{margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);color:var(--muted);font-size:12px}
+
+  .tl{list-style:none;margin:0;padding:0}
+  .tl li{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .tl li:last-child{border-bottom:none}
+  .tl .dt{flex:0 0 96px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .tl .ev b{font-size:13px}.tl .ev p{margin:2px 0 0;font-size:12px;color:#546373}
+  .tl .dot{flex:0 0 9px;height:9px;border-radius:50%;background:var(--brand);margin-top:5px}
+
+  .foot{display:flex;justify-content:space-between;color:var(--muted);font-size:11.5px;margin-top:22px;
+    padding-top:10px;border-top:1px solid var(--line)}
+  .hide{display:none}
+
+  @media (max-width:1080px){.grid{grid-template-columns:1fr}.vitals{grid-template-columns:repeat(2,1fr)}
+    .gsearch{display:none}.brand{min-width:auto}}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">ش</div>
+    <div>
+      <b>ShifaCare <span style="opacity:.8;font-weight:600">EMR</span></b>
+      <small class="ar">نظام شفاء كير للسجلات الطبية</small>
+    </div>
+  </div>
+  <div class="gsearch">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input placeholder="Search patient, MRN, national ID…" />
+  </div>
+  <div class="topspace"></div>
+  <div class="topicons">
+    <span class="badge-dot" title="Notifications">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+    </span>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M4 4h16v12H5.2L4 17.2z"/></svg>
+  </div>
+  <div class="tclock">
+    <b id="clk-time">—</b><br><small id="clk-date">—</small>
+  </div>
+  <div class="me">
+    <div class="av">K</div>
+    <div>
+      <b>Dr. Karim Adel</b>
+      <small>Internal Medicine · Attending</small>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="sec">Chart</div>
+    <nav class="nav">
+      <a class="on"><span class="ico">▤</span> Overview</a>
+      <a><span class="ico">🩺</span> Encounters <span class="cnt">7</span></a>
+      <a><span class="ico">💊</span> Medications <span class="cnt">3</span></a>
+      <a><span class="ico">🧪</span> Lab Results <span class="cnt">12</span></a>
+      <a><span class="ico">🩻</span> Imaging <span class="cnt">2</span></a>
+      <a><span class="ico">📝</span> Clinical Notes</a>
+      <a><span class="ico">📎</span> Documents</a>
+    </nav>
+    <div class="sec">Care Team</div>
+    <nav class="nav">
+      <a><span class="ico">👤</span> Dr. Karim Adel</a>
+      <a><span class="ico">👤</span> Dr. Nadia Fahmy</a>
+    </nav>
+
+    <div class="cardq">
+      <h5>Encounter · Today</h5>
+      <div class="qrow"><span>Status</span><b style="color:var(--brand)">In progress</b></div>
+      <div class="qrow"><span>Room</span><b>Clinic 3 · A-204</b></div>
+      <div class="qrow"><span>Type</span><b>Follow-up</b></div>
+      <div class="qrow"><span>Wait time</span><b>08 min</b></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <!-- PATIENT BANNER -->
+    <section class="pbanner">
+      <div class="pav">Y</div>
+      <div class="pmain">
+        <div class="pname">
+          <h1>Yara Mostafa Ibrahim</h1>
+          <span class="arname ar">يارا مصطفى إبراهيم</span>
+          <span class="sex">Female · 30y</span>
+        </div>
+        <div class="pmeta">
+          <span>MRN <b>SC-0294-118</b></span>
+          <span>National ID <b>29603150101487</b></span>
+          <span>DOB <b>15 Mar 1996</b></span>
+          <span>Phone <b>+20 100 274 6813</b></span>
+          <span>Governorate <b>Cairo</b></span>
+        </div>
+      </div>
+      <div class="pflags">
+        <span class="flag allergy" title="Drug allergy">⚠ Allergy: Penicillin</span>
+        <span class="flag blood">🩸 O⁺</span>
+        <span class="flag ins">Ins · Misr Takaful</span>
+      </div>
+    </section>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab on" data-tab="visit">Current Visit</div>
+      <div class="tab" data-tab="labs">Lab Results</div>
+      <div class="tab" data-tab="meds">Medications</div>
+      <div class="tab" data-tab="hist">History</div>
+    </div>
+
+    <!-- ===== CURRENT VISIT ===== -->
+    <div class="tabpane" data-pane="visit">
+      <div class="grid">
+        <div class="card full">
+          <h3>Vital Signs <span class="r">Recorded 09:42 · 12 Mar 2026 · Nurse H. Saad</span></h3>
+          <div class="body">
+            <div class="vitals">
+              <div class="vit"><div class="k">Blood Pressure</div><div class="v">118/76 <small>mmHg</small></div></div>
+              <div class="vit"><div class="k">Heart Rate</div><div class="v">82 <small>bpm</small></div></div>
+              <div class="vit flag-w"><div class="k">Temperature</div><div class="v">37.6 <small>°C</small></div></div>
+              <div class="vit"><div class="k">SpO₂</div><div class="v">98 <small>%</small></div></div>
+              <div class="vit"><div class="k">Resp. Rate</div><div class="v">16 <small>/min</small></div></div>
+              <div class="vit"><div class="k">Weight</div><div class="v">61 <small>kg</small></div></div>
+              <div class="vit"><div class="k">Height</div><div class="v">165 <small>cm</small></div></div>
+              <div class="vit"><div class="k">BMI</div><div class="v">22.4 <small>kg/m²</small></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Clinical Note <span class="r">Encounter #SC-2026-0312</span></h3>
+          <div class="body note">
+            <h4>Chief Complaint</h4>
+            <p>Recurrent fatigue and lightheadedness over the past 3 weeks, worse on exertion.</p>
+            <h4>History of Present Illness</h4>
+            <p>30-year-old female, known iron-deficiency anemia, presents for follow-up after a 6-week
+               oral iron course. Reports partial improvement in energy but persistent morning dizziness.
+               No chest pain, palpitations, or syncope. Menstrual cycles regular. Appetite adequate.</p>
+            <h4>Assessment</h4>
+            <p>Iron-deficiency anemia, improving — repeat CBC and ferritin ordered.
+               Low-grade temperature noted; monitor, likely benign viral.</p>
+            <h4>Plan</h4>
+            <p>Continue ferrous sulfate 200 mg BID. Add vitamin C to aid absorption.
+               Reassess in 4 weeks with labs. Advise iron-rich diet. Return sooner if syncope or worsening dyspnea.</p>
+            <div class="sig">Electronically signed — <b>Dr. Karim Adel</b>, Internal Medicine · 12 Mar 2026, 10:07</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Problem List</h3>
+          <div class="body" style="padding:4px 0">
+            <table>
+              <thead><tr><th>Condition</th><th>Since</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Iron-deficiency anemia</td><td class="num">Jan 2026</td><td><span class="pill due">Active</span></td></tr>
+                <tr><td>Migraine (episodic)</td><td class="num">2021</td><td><span class="pill ok">Stable</span></td></tr>
+                <tr><td>Seasonal allergic rhinitis</td><td class="num">2019</td><td><span class="pill ok">Stable</span></td></tr>
+                <tr><td>Appendectomy (surgical hx)</td><td class="num">2014</td><td><span class="pill ok">Resolved</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card full">
+          <h3>Orders Placed This Visit</h3>
+          <div class="body" style="padding:4px 0">
+            <table>
+              <thead><tr><th>Order</th><th>Category</th><th>Priority</th><th>Ordered</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Complete Blood Count (CBC)</td><td>Laboratory</td><td>Routine</td><td class="num">12 Mar 2026 10:05</td><td><span class="pill due">Pending</span></td></tr>
+                <tr><td>Serum Ferritin</td><td>Laboratory</td><td>Routine</td><td class="num">12 Mar 2026 10:05</td><td><span class="pill due">Pending</span></td></tr>
+                <tr><td>Ferrous Sulfate 200 mg — refill</td><td>Pharmacy</td><td>Routine</td><td class="num">12 Mar 2026 10:07</td><td><span class="pill ok">Sent</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LABS ===== -->
+    <div class="tabpane hide" data-pane="labs">
+      <div class="card full" style="margin-top:14px">
+        <h3>Laboratory Results <span class="r">Panel: CBC + Iron Studies · Collected 26 Feb 2026</span></h3>
+        <div class="body" style="padding:4px 0">
+          <table>
+            <thead><tr><th>Test</th><th>Result</th><th>Unit</th><th>Reference</th><th>Flag</th></tr></thead>
+            <tbody>
+              <tr><td>Hemoglobin (Hb)</td><td class="num">10.4</td><td>g/dL</td><td>12.0 – 15.5</td><td><span class="pill lo">Low</span></td></tr>
+              <tr><td>Hematocrit</td><td class="num">33.1</td><td>%</td><td>36 – 46</td><td><span class="pill lo">Low</span></td></tr>
+              <tr><td>MCV</td><td class="num">74</td><td>fL</td><td>80 – 100</td><td><span class="pill lo">Low</span></td></tr>
+              <tr><td>Serum Ferritin</td><td class="num">9</td><td>ng/mL</td><td>15 – 150</td><td><span class="pill lo">Low</span></td></tr>
+              <tr><td>Serum Iron</td><td class="num">38</td><td>µg/dL</td><td>50 – 170</td><td><span class="pill lo">Low</span></td></tr>
+              <tr><td>WBC</td><td class="num">6.8</td><td>×10³/µL</td><td>4.0 – 11.0</td><td><span class="pill ok">Normal</span></td></tr>
+              <tr><td>Platelets</td><td class="num">288</td><td>×10³/µL</td><td>150 – 400</td><td><span class="pill ok">Normal</span></td></tr>
+              <tr><td>CRP</td><td class="num">3.1</td><td>mg/L</td><td>&lt; 5.0</td><td><span class="pill ok">Normal</span></td></tr>
+              <tr><td>TSH</td><td class="num">2.1</td><td>mIU/L</td><td>0.4 – 4.0</td><td><span class="pill ok">Normal</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p style="color:var(--muted);font-size:12px;margin:10px 2px">
+        Verified by <b>Dr. Nadia Fahmy</b> (Clinical Pathology) · Lab ref SC-LAB-26-4471 · ShifaCare Central Laboratory, Cairo
+      </p>
+    </div>
+
+    <!-- ===== MEDS ===== -->
+    <div class="tabpane hide" data-pane="meds">
+      <div class="card full" style="margin-top:14px">
+        <h3>Active Medications</h3>
+        <div class="body" style="padding:4px 0">
+          <table>
+            <thead><tr><th>Medication</th><th>Dose</th><th>Route</th><th>Frequency</th><th>Prescriber</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Ferrous Sulfate</td><td>200 mg</td><td>Oral</td><td>Twice daily</td><td>Dr. Karim Adel</td><td><span class="pill active">Active</span></td></tr>
+              <tr><td>Ascorbic Acid (Vit C)</td><td>500 mg</td><td>Oral</td><td>Once daily</td><td>Dr. Karim Adel</td><td><span class="pill active">Active</span></td></tr>
+              <tr><td>Cetirizine</td><td>10 mg</td><td>Oral</td><td>PRN (allergy)</td><td>Dr. Karim Adel</td><td><span class="pill active">Active</span></td></tr>
+              <tr><td>Sumatriptan</td><td>50 mg</td><td>Oral</td><td>PRN (migraine)</td><td>Dr. N. Fahmy</td><td><span class="pill ok">On hold</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card full" style="margin-top:14px">
+        <h3>⚠ Allergies &amp; Alerts</h3>
+        <div class="body" style="padding:4px 0">
+          <table>
+            <thead><tr><th>Allergen</th><th>Reaction</th><th>Severity</th><th>Noted</th></tr></thead>
+            <tbody>
+              <tr><td>Penicillin</td><td>Urticaria, facial swelling</td><td><span class="pill hi">High</span></td><td class="num">2018</td></tr>
+              <tr><td>Pollen (grass)</td><td>Rhinitis, itchy eyes</td><td><span class="pill due">Moderate</span></td><td class="num">2019</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== HISTORY ===== -->
+    <div class="tabpane hide" data-pane="hist">
+      <div class="card full" style="margin-top:14px">
+        <h3>Encounter History</h3>
+        <div class="body">
+          <ul class="tl">
+            <li><span class="dot"></span><span class="dt">12 Mar 2026</span><div class="ev"><b>Follow-up — Anemia</b><p>Dr. Karim Adel · Clinic 3. Continued iron therapy; labs re-ordered.</p></div></li>
+            <li><span class="dot"></span><span class="dt">26 Feb 2026</span><div class="ev"><b>Lab draw — CBC + Iron studies</b><p>ShifaCare Central Laboratory. Hb 10.4 g/dL, ferritin 9 ng/mL.</p></div></li>
+            <li><span class="dot"></span><span class="dt">29 Jan 2026</span><div class="ev"><b>New diagnosis — Iron-deficiency anemia</b><p>Dr. Karim Adel. Started ferrous sulfate 200 mg BID.</p></div></li>
+            <li><span class="dot"></span><span class="dt">14 Nov 2025</span><div class="ev"><b>Migraine review</b><p>Dr. Nadia Fahmy · Neurology. Episodic, well-controlled.</p></div></li>
+            <li><span class="dot"></span><span class="dt">03 Sep 2025</span><div class="ev"><b>Annual check-up</b><p>Dr. Karim Adel. Unremarkable; routine screening ordered.</p></div></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>ShifaCare EMR v6.2 · Node: CAIRO-CL3 · Session Dr. K. Adel (kadel@shifacare.eg)</span>
+      <span>Confidential — Patient Health Information · © 2026 ShifaCare Medical Group</span>
+    </div>
+  </main>
+</div>
+
+<script>
+  // live clock (fixed to the film's timeframe: March 2026)
+  function pad(n){return String(n).padStart(2,"0")}
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  function tick(){
+    const now=new Date();
+    // anchor date to Thu 12 Mar 2026, live-moving seconds/minutes
+    const t=document.getElementById("clk-time");
+    const d=document.getElementById("clk-date");
+    t.textContent=pad(now.getHours())+":"+pad(now.getMinutes())+":"+pad(now.getSeconds());
+    d.textContent="Thu · 12 Mar 2026";
+  }
+  setInterval(tick,1000);tick();
+
+  // tabs
+  document.querySelectorAll(".tab").forEach(function(tab){
+    tab.addEventListener("click",function(){
+      document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
+      tab.classList.add("on");
+      const id=tab.dataset.tab;
+      document.querySelectorAll(".tabpane").forEach(function(p){
+        p.classList.toggle("hide",p.dataset.pane!==id);
+      });
+    });
+  });
+
+  // sidebar highlight (visual only)
+  document.querySelectorAll(".nav a").forEach(function(a){
+    a.addEventListener("click",function(){
+      const grp=a.closest(".nav");
+      grp.querySelectorAll("a").forEach(x=>x.classList.remove("on"));
+      a.classList.add("on");
+    });
+  });
+</script>
+</body>
+</html>
